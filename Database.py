@@ -91,7 +91,25 @@ class dataBase:
 
 
     def execute_quary(self, query):
-
+        """
+        Executes the specified query on the database.
+    
+        Args:
+            query (str): The SQL query to execute.
+    
+        Returns:
+            Cursor: The database cursor object.
+    
+        Raises:
+            None.
+    
+        Example:
+            To execute an SQL query "SELECT * FROM users", you can call the function like this:
+                execute_quary("SELECT * FROM users")
+    
+            This will execute the query on the database and return the cursor object.
+    
+        """
         try:
             if self.check_connection():
                 self.cursor.execute(query)
