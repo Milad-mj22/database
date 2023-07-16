@@ -45,11 +45,6 @@ class dataBase:
         """
         self.log_level = num
 
-        """this function used to connect mysql with init parms
-
-        Returns:
-            object: connection of mysql
-        """
     def connect(self):
         """
         Establishes a connection to the MySQL database using the provided parameters and set self parameters for connecting.
