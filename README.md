@@ -36,7 +36,7 @@ pip install -r requirements.txt
 
 # Step1: Initialize the dataBase class with your MySQL database credentials:
 In your script import Database and set your parms ( username , password , database name ) in your file and create an Object if your dont see Error while connecting your connection has been created
-if you dont have database use function :  create_schema()
+if you dont have database automatic create your schema
 ``` python
 import Database
 
