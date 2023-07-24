@@ -141,6 +141,10 @@ class dataBase:
         s = s[:-1]
         s = '(' + s + ')'
 
+        new_data =[]
+        for _,d in enumerate(data):
+            new_data.append(str(d))
+        data = new_data
         try:
 
             if self.check_connection():
@@ -409,17 +413,22 @@ class dataBase:
         try:
             if self.check_connection():
                 cursor=self.execute_quary("select * from {}".format(table_name))
-                records = cursor.fetchall()
-                field_names = [col[0] for col in cursor.description]
+                if cursor:
+                    records = cursor.fetchall()
+                    field_names = [col[0] for col in cursor.description]
 
-                if without_auto_incresment:
-                    col_name = list(self.get_auto_increment_col_name(table_name=table_name))
-                    res = []
-                    for name in field_names:
-                        if name not in col_name:
-                            res.append(name)
+                    if without_auto_incresment:
+                        col_name = list(self.get_auto_increment_col_name(table_name=table_name))
+                        res = []
+                        for name in field_names:
+                            if name not in col_name:
+                                res.append(name)
 
-                    return res
+                        return res
+                    else:
+                        return field_names
+                    
+                return []
             else:
                 self.show_message('Error in SQL Connection')
                 return []
@@ -452,7 +461,7 @@ class dataBase:
         """
 
         if self.check_connection():
-            cursor=self.execute_quary("select COLUMN_NAME from information_schema.columns where TABLE_SCHEMA='test2' and TABLE_NAME='users' and EXTRA like '%auto_increment%';")
+            cursor=self.execute_quary("select COLUMN_NAME from information_schema.COLUMNS where TABLE_SCHEMA='{}' and TABLE_NAME='{}' and EXTRA like '%auto_increment%';".format(self.data_base_name,table_name))
             records = cursor.fetchall()
             if records:
                 records=records[0]
@@ -499,6 +508,7 @@ class dataBase:
             in reverse order from the 'users' table.
 
         """
+
             
         sort_order = 'DESC' if reverse_order else 'ASC'
         try:
@@ -579,7 +589,7 @@ class dataBase:
         """
         try:
             if self.check_connection():
-                query = "CREATE TABLE IF NOT EXISTS {} (id INT NOT NULL PRIMARY KEY);".format(table_name)
+                query = "CREATE TABLE IF NOT EXISTS {} (id {} {} {} PRIMARY KEY);".format(table_name,INT,NOT_NULL,AUTO_INCREMENT)
                 self.execute_quary(query=query)
                 return True
             else:
@@ -617,7 +627,7 @@ class dataBase:
                 cursor=self.execute_quary(query=query)
                 schemas = cursor.fetchall()
                 for col in schemas:
-                    if col_name == col[3]:
+                    if col_name == col[3] and self.data_base_name == col[1]:
                         self.show_message('Column Exist')
                         return True
             else:
@@ -792,7 +802,6 @@ class dataBase:
         """
         try:
                 connection = mysql.connector.connect(host=self.host,
-                                                database='sys',
                                                 user=self.user_name,
                                                 password=self.password,
                                                 auth_plugin='mysql_native_password')  
@@ -810,7 +819,7 @@ if __name__ == "__main__":
     # create_schema(user_name='root',password='Dorsa-1400',schema_name='milad')
 
 
-    db=dataBase('root','Dorsa-140320','localhost','test8255128')
+    db=dataBase('root','Dorsa-1400','localhost','test8255516549845asdasd128')
 
     
 
@@ -820,15 +829,17 @@ if __name__ == "__main__":
     db.add_column(table_name='users',col_name='last_name',type=VARCHAR,len=80,Null=NOT_NULL)
     db.add_column(table_name='users',col_name='email',type=VARCHAR,len=80,Null=NOT_NULL)
 
-    content=db.get_all_content('asdw2')
+    content=db.get_all_content('users')
 
-    col_name=db.get_col_name('asdw')
+    col_name=db.get_col_name('users')
+
+    print(col_name)
 
     # db.delete_column('users','id')
 
-    # data = ('milad','moltaji','m.moltaji')
-    # for _ in range(50):
-    #     ret =db.add_record('users',data='__YOUR_DATA__')
+    data = ('milad',[[7465874],[456498]],'m.moltaji')
+    for _ in range(50):
+        ret =db.add_record('users',data=data)
 
     db.get_auto_increment_col_name('users')
 
@@ -839,6 +850,7 @@ if __name__ == "__main__":
     r = db.get_all_content(table_name='users',limit=True,column_order='email')
     
     a=db.search(table_name='users',col_name='first_name',value='m')
+
 
 
 
