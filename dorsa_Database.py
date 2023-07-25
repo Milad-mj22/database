@@ -120,6 +120,25 @@ class dataBase:
         return self.cursor
 
 
+
+
+
+    def add_record_dict(self,table_name,data):
+
+        cols = self.get_col_name(table_name=table_name,without_auto_incresment=True)
+        data_list =[]
+        for col in cols:
+            data_list.append(data[col])
+
+
+        self.add_record(table_name=table_name,data=data_list)
+
+
+
+
+
+
+
     def add_record(self,table_name , data):
         """this function is used to add a new record to table
 
@@ -284,7 +303,7 @@ class dataBase:
                     record_dict = {}
                     for i in range( len(field_names) ):
                         record_dict[ field_names[i] ] = record[i]
-                    # print('record_dict',record_dict)
+              
                     
                     res.append( record_dict )
                 
@@ -640,7 +659,7 @@ class dataBase:
 
 
 
-    def add_column(self,table_name,col_name,type,len=255,Null=NULL,AI=False,default=''):
+    def add_column(self,table_name,col_name,type,len=255,Null=NULL,AI=False,default='',unique=False):
         """
         Adds a new column to the specified table.
 
@@ -685,7 +704,7 @@ class dataBase:
             else:
                 default = DEFAULT+str(default)
 
-           
+
 
 
         if type !=INT and AI==AUTO_INCREMENT:
@@ -696,8 +715,16 @@ class dataBase:
 
             try:
                 if self.check_connection():
-                    query = "ALTER TABLE  {} ADD {} {} {} {} {};".format(table_name,col_name,type,Null,AI,default)
+                    query = "ALTER TABLE  {} ADD {} {} {} {} {} ".format(table_name,col_name,type,Null,AI,default)
                     self.execute_quary(query=query)
+
+                    if unique:
+                        try:
+                            query = "ALTER TABLE `{}`.`{}` ADD UNIQUE INDEX `{}_UNIQUE` (`{}` ASC) VISIBLE;".format(self.data_base_name,table_name,col_name,col_name)
+                            self.execute_quary(query=query)
+                        except:
+                            self.show_message('Unique Error')
+                            return False
                     return True
                 else:
                     self.show_message('Error in SQL Connection')
@@ -814,20 +841,45 @@ class dataBase:
             return False
 
 
+
+    def get_count_table(self,table_name):
+
+        try:
+            if self.check_connection():
+                query = "SELECT COUNT(*) FROM {}".format(table_name)
+                cursor=self.execute_quary(query=query)
+                len = cursor.fetchall()
+                return len[0][0]
+            else:
+                self.show_message('Error in SQL Connection')
+                return 0
+        except mysql.connector.Error as e:
+            print("Error Get Count table {}".format(table_name), e)
+            return 0
+
+
+
+
+
+
 if __name__ == "__main__":
 
     # create_schema(user_name='root',password='Dorsa-1400',schema_name='milad')
 
 
-    db=dataBase('root','Dorsa-1400','localhost','test8255516549845asdasd128')
+    db=dataBase('root','Dorsa-1400','localhost','test')
 
     
 
     db.create_table('users')   # you can dont create table
     a=db.get_all_schemas()
+
+    db.delete_column('users','email')
+
     db.add_column(table_name='users',col_name='first_name',type=VARCHAR,len=80,Null=NOT_NULL)
     db.add_column(table_name='users',col_name='last_name',type=VARCHAR,len=80,Null=NOT_NULL)
-    db.add_column(table_name='users',col_name='email',type=VARCHAR,len=80,Null=NOT_NULL)
+    db.add_column(table_name='users',col_name='email',type=VARCHAR,len=80,Null=NOT_NULL,unique=True)
+
 
     content=db.get_all_content('users')
 
@@ -838,10 +890,23 @@ if __name__ == "__main__":
     # db.delete_column('users','id')
 
     data = ('milad',[[7465874],[456498]],'m.moltaji')
-    for _ in range(50):
-        ret =db.add_record('users',data=data)
+
+    # for _ in range(50):
+    #     ret =db.add_record('users',data=data)
+
+
+
+    data = {'first_name':'milad','email':[[7465874],[456498]],'last_name':'moltaji'}
+
+    col_name=db.get_col_name('users')
+
+    db.add_record_dict('users',data)
+
+    a=db.get_count_table('users')
+    print(a)
 
     db.get_auto_increment_col_name('users')
+    
 
     db.update_record(table_name='asdw2',col_name='test4',value='11',id_name='id',id_value='1')
 
