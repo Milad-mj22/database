@@ -27,13 +27,14 @@ Error_auto_increment = 'AUTO INCREMENT Only can set on INT type'
 class dataBase:
     """this class used to create connection and do some functions such as : add , delete , create , etc
     """
-    def __init__(self,username,password,host,schema,log_level=1):
+    def __init__(self,username,password,host,schema,log_level=1,func = None):
         pass
         self.user_name=username
         self.password=password
         self.host=host
         self.data_base_name=schema
         self.log_level=log_level
+        self.func = func
         self.check_connection()
         
 
@@ -855,41 +856,8 @@ class dataBase:
                 self.show_message('Error in SQL Connection')
                 return []
         except mysql.connector.Error as e:
-            print("Error Get schema names ", e)
+            self.show_message("Error create schema ", e)
             return False
-
-
-
-    def show_message(self,error,level=0):
-        """
-        Displays an error message.
-
-        Args:
-            error (str): The error message to display.
-            level (int): Optional. The level of the error message. Default is 0.
-
-        Returns:
-            None.
-
-        Raises:
-            None.
-
-        Example:
-            To display an error message "Error in SQL Connection", you can call the function like this:
-                show_message('Error in SQL Connection')
-
-            This will print the error message to the console.
-
-            You can also specify a level for the error message. For example:
-                show_message('Error in SQL Connection', level=1)
-
-            This will print the error message to the console only if the log level is set to 1.
-
-        """
-        
-        if self.log_level==1:
-            print(error)
-
 
 
 
@@ -924,7 +892,7 @@ class dataBase:
                 cursor.execute(query)
                 return True
         except mysql.connector.Error as e:
-            print("Error create schema ", e)
+            self.show_message("Error create schema ", e)
             return False
 
 
@@ -968,10 +936,48 @@ class dataBase:
                 self.show_message('Error in SQL Connection')
                 return 0
         except mysql.connector.Error as e:
-            print("Error Get Count table {}".format(table_name), e)
+            self.show_message("Error Get Count table {}".format(table_name), e)
             return 0
 
 
+    def set_func(self,func):
+        self.func = func
+
+
+
+    def show_message(self,error,level=0,func=False):
+        """
+        Displays an error message.
+
+        Args:
+            error (str): The error message to display.
+            level (int): Optional. The level of the error message. Default is 0.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+
+        Example:
+            To display an error message "Error in SQL Connection", you can call the function like this:
+                show_message('Error in SQL Connection')
+
+            This will print the error message to the console.
+
+            You can also specify a level for the error message. For example:
+                show_message('Error in SQL Connection', level=1)
+
+            This will print the error message to the console only if the log level is set to 1.
+
+        """
+        
+        if self.log_level==1:
+            print(error)
+
+
+        if self.func is not None:
+            self.func()
 
 
 
@@ -1036,7 +1042,4 @@ if __name__ == "__main__":
     r = db.get_all_content(table_name='users',limit=True,column_order='email')
     
     a=db.search(table_name='users',col_name='first_name',value='m')
-
-
-
 
