@@ -124,13 +124,38 @@ class dataBase:
 
 
     def add_record_dict(self,table_name,data):
+        """
+        Add a new record to the specified database table using a dictionary of column-value pairs.
+
+        Parameters:
+            table_name (str): The name of the table where the record will be added.
+            data (dict): A dictionary containing column names as keys and their corresponding values
+                        for the new record to be inserted into the table.
+
+        Returns:
+            None
+
+        This method takes the input `data` dictionary, extracts the values corresponding to the columns
+        of the specified `table_name`, and then adds a new record to the table using the `add_record` method.
+
+        The `add_record` method is assumed to be defined elsewhere and is responsible for executing the
+        actual database insertion operation.
+
+        Example usage:
+        data = {'column1': 'value1', 'column2': 'value2', 'column3': 42}
+        add_record_dict('my_table', data)
+
+        Note:
+        - Make sure to handle the connection to the database and the cursor outside of this method.
+        - Ensure that the `add_record` method is implemented to perform the actual database insertion.
+        - This method assumes that the keys in the `data` dictionary correspond to the column names in the table.
+        It is the caller's responsibility to ensure the dictionary contains the correct column names and values.
+        """
 
         cols = self.get_col_name(table_name=table_name,without_auto_incresment=True)
         data_list =[]
         for col in cols:
             data_list.append(data[col])
-
-
         self.add_record(table_name=table_name,data=data_list)
 
 
@@ -152,6 +177,7 @@ class dataBase:
         len_parameters = len(parametrs)
         cols =''
         for parm in parametrs:
+
             cols+=parm+','
         cols = cols[:-1]
         cols = '(' + cols + ')'
@@ -217,6 +243,68 @@ class dataBase:
             self.show_message(("Error Update Record ", e))
             return False
             
+
+
+
+
+    def update_record_dict(self,table_name,data,id_name,id_value):
+        """
+        Update records in the specified database table.
+
+        Parameters:
+            table_name (str): The name of the table where the records will be updated.
+            data (dict): A dictionary containing the column names as keys and their corresponding values
+                        that need to be updated in the table.
+            id_name (str): The name of the column used as the identifier for finding the records to update.
+            id_value: The value of the identifier to search for records in the table.
+
+        Returns:
+            bool: True if the records were updated successfully, False otherwise.
+
+        Raises:
+            mysql.connector.Error: If there's an error during the update process.
+
+        This method updates records in the specified MySQL database table. It first checks if there is a valid
+        SQL connection established using the `check_connection()` method. If the connection is successful,
+        the `data` dictionary is used to create an SQL query to update the records in the table.
+
+        Example usage:
+        data = {'column1': 'new_value1', 'column2': 'new_value2'}
+        id_name = 'record_id'
+        id_value = 123
+        update_success = update_record_dict('my_table', data, id_name, id_value)
+        if update_success:
+            print('Records updated successfully.')
+        else:
+            print('Failed to update records.')
+
+        Note:
+        - Make sure to handle the connection to the database and the cursor outside of this method.
+        - This method assumes you are using the MySQL Connector/Python library for database access.
+        """
+        try:
+            if self.check_connection():
+                q=''
+                for data_key,data_value in zip(data,data.keys()):
+                    q+='{} = "{}" ,'.format(data_key,data[data_key])
+                q = q[:-1]
+                if self.check_connection():
+                    mySql_insert_query = """UPDATE {} SET {} WHERE {} ={} """.format(table_name,q,id_name,(id_value))
+                    self.cursor.execute(mySql_insert_query)
+                    self.connection.commit()
+                    self.show_message((self.cursor.rowcount, "Records Updated successfully "),level=1)
+                    self.cursor.close()
+                    return True
+            else:
+                self.show_message('Error in SQL Connection')
+                return False    
+
+        except mysql.connector.Error as e:
+            self.show_message(("Error Update Record ", e))
+            return False
+
+
+
 
 
     def remove_record(self, table_name , col_name, value ):
@@ -740,7 +828,6 @@ class dataBase:
 
 
 
-
     def get_all_schemas(self):
         """
         Retrieves the names of all available database schemas.
@@ -844,6 +931,33 @@ class dataBase:
 
     def get_count_table(self,table_name):
 
+        """
+        Get the number of rows in the specified database table.
+
+        Parameters:
+            table_name (str): The name of the table for which the row count is needed.
+
+        Returns:
+            int: The number of rows in the specified table. Returns 0 if there is an error or no connection.
+
+        Raises:
+            mysql.connector.Error: If there's an error while executing the query.
+
+        This method retrieves the row count for the specified `table_name` using a SQL query. It first checks
+        if there is a valid SQL connection established using the `check_connection()` method. If the connection
+        is successful, it executes the query and fetches the result.
+
+        Example usage:
+        row_count = get_count_table('my_table')
+        print(f"The table 'my_table' has {row_count} rows.")
+
+        Note:
+        - Make sure to handle the connection to the database and the cursor outside of this method.
+        - The `execute_quary` method is assumed to be defined elsewhere and is responsible for executing
+        the SQL query and returning the cursor object.
+        - This method assumes you are using the MySQL Connector/Python library for database access.
+        """
+
         try:
             if self.check_connection():
                 query = "SELECT COUNT(*) FROM {}".format(table_name)
@@ -870,7 +984,7 @@ if __name__ == "__main__":
     db=dataBase('root','Dorsa-1400','localhost','test')
 
     
-
+    db.delete_table('users')
     db.create_table('users')   # you can dont create table
     a=db.get_all_schemas()
 
@@ -878,7 +992,7 @@ if __name__ == "__main__":
 
     db.add_column(table_name='users',col_name='first_name',type=VARCHAR,len=80,Null=NOT_NULL)
     db.add_column(table_name='users',col_name='last_name',type=VARCHAR,len=80,Null=NOT_NULL)
-    db.add_column(table_name='users',col_name='email',type=VARCHAR,len=80,Null=NOT_NULL,unique=True)
+    db.add_column(table_name='users',col_name='email',type=VARCHAR,len=80,Null=NOT_NULL,unique=False)
 
 
     content=db.get_all_content('users')
@@ -891,8 +1005,8 @@ if __name__ == "__main__":
 
     data = ('milad',[[7465874],[456498]],'m.moltaji')
 
-    # for _ in range(50):
-    #     ret =db.add_record('users',data=data)
+    for _ in range(50):
+        ret =db.add_record('users',data=data)
 
 
 
@@ -909,6 +1023,13 @@ if __name__ == "__main__":
     
 
     db.update_record(table_name='asdw2',col_name='test4',value='11',id_name='id',id_value='1')
+
+
+    edit_data = {'first_name':'123','email':'123'}
+
+
+    db.update_record_dict(table_name='users',data=edit_data,id_name='id',id_value='1')
+
 
     db.remove_record(table_name='users',col_name='first_name',value='m')
     
